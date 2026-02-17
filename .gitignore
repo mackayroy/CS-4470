@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+.Trash/
+
+# Archives
+*.zip
+*.rar
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor files
+.vscode/
+.idea/
+
