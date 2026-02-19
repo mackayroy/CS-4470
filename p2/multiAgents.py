@@ -330,7 +330,53 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        ghostIndices = list(range(1, gameState.getNumAgents()))
+        firstGhost = ghostIndices[0]
+        lastGhost = ghostIndices[-1]
+
+        def isTerminal(state,depth):
+            return state.isWin() or state.isLose() or depth == self.depth
+        
+        def expValue(state,depth,ghostIndex):
+            if isTerminal(state,depth):
+                return self.evaluationFunction(state)
+            
+            sumValue = 0
+            numActions = 0
+            
+            for action in state.getLegalActions(ghostIndex):
+                nextState = state.generateSuccessor(ghostIndex, action)
+                if ghostIndex == lastGhost:
+                    value = maxValue(nextState, depth + 1)
+                else:
+                    value = expValue(nextState,depth, ghostIndex + 1)
+                sumValue += value
+                numActions += 1
+            return sumValue / numActions
+            
+        def maxValue(state,depth):
+            if isTerminal(state,depth):
+                return self.evaluationFunction(state)
+            value = float('-inf')
+
+            for action in state.getLegalActions(0):
+                nextState = state.generateSuccessor( 0,action)
+                temp = expValue(nextState,depth,firstGhost)
+                value = max(value,temp)
+            return value
+        
+        bestAction = None
+        bestScore = float("-inf")
+
+        for action in gameState.getLegalActions(0):
+            nextState = gameState.generateSuccessor(0,action)
+            score = expValue(nextState, 0, firstGhost)
+            if score > bestScore:
+                bestScore = score
+                bestAction = action
+
+        return bestAction
 
 def betterEvaluationFunction(game_state: GameState) -> float:
     """A more sophisticated evaluation function for Pacman game states.
@@ -347,7 +393,39 @@ def betterEvaluationFunction(game_state: GameState) -> float:
     """
     
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    newPos = game_state.getPacmanPosition()
+    newFood = game_state.getFood()
+    newGhostStates = game_state.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+
+    INF = float("inf")
+    WEIGHT_FOOD = 10.0
+    WEIGHT_GHOST = -10.0
+    WEIGHTED_SCARED_GHOST = 100.0
+
+    score = game_state.getScore()
+
+    foodList = newFood.asList()
+    distanceList = []
+    if foodList:
+        for food in foodList:
+            distanceList.append(util.manhattanDistance(newPos,food))
+    
+    if len(distanceList) > 0:
+        score += WEIGHT_FOOD / min(distanceList)
+    else:
+        score += WEIGHT_FOOD
+
+    for ghostState, scaredTimes in zip(newGhostStates, newScaredTimes):            
+            dist = manhattanDistance(newPos, ghostState.getPosition())
+            if dist > 0:
+                if scaredTimes > 0:
+                    score += WEIGHTED_SCARED_GHOST / dist
+                else:
+                    score += WEIGHT_GHOST / dist
+            else:
+                return float("-inf")
+    return score
     
 # Abbreviation
 better = betterEvaluationFunction
