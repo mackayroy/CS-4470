@@ -330,6 +330,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         
         "*** YOUR CODE HERE ***"
+
         ghostIndices = list(range(1, gameState.getNumAgents()))
         firstGhost = ghostIndices[0]
         lastGhost = ghostIndices[-1]
@@ -392,7 +393,39 @@ def betterEvaluationFunction(game_state: GameState) -> float:
     """
     
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    newPos = game_state.getPacmanPosition()
+    newFood = game_state.getFood()
+    newGhostStates = game_state.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+
+    INF = float("inf")
+    WEIGHT_FOOD = 10.0
+    WEIGHT_GHOST = -10.0
+    WEIGHTED_SCARED_GHOST = 100.0
+
+    score = game_state.getScore()
+
+    foodList = newFood.asList()
+    distanceList = []
+    if foodList:
+        for food in foodList:
+            distanceList.append(util.manhattanDistance(newPos,food))
+    
+    if len(distanceList) > 0:
+        score += WEIGHT_FOOD / min(distanceList)
+    else:
+        score += WEIGHT_FOOD
+
+    for ghostState, scaredTimes in zip(newGhostStates, newScaredTimes):            
+            dist = manhattanDistance(newPos, ghostState.getPosition())
+            if dist > 0:
+                if scaredTimes > 0:
+                    score += WEIGHTED_SCARED_GHOST / dist
+                else:
+                    score += WEIGHT_GHOST / dist
+            else:
+                return float("-inf")
+    return score
     
 # Abbreviation
 better = betterEvaluationFunction
