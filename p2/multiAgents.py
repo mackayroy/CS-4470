@@ -330,7 +330,52 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        ghostIndices = list(range(1, gameState.getNumAgents()))
+        firstGhost = ghostIndices[0]
+        lastGhost = ghostIndices[-1]
+
+        def isTerminal(state,depth):
+            return state.isWin() or state.isLose() or depth == self.depth
+        
+        def expValue(state,depth,ghostIndex):
+            if isTerminal(state,depth):
+                return self.evaluationFunction(state)
+            
+            sumValue = 0
+            numActions = 0
+            
+            for action in state.getLegalActions(ghostIndex):
+                nextState = state.generateSuccessor(ghostIndex, action)
+                if ghostIndex == lastGhost:
+                    value = maxValue(nextState, depth + 1)
+                else:
+                    value = expValue(nextState,depth, ghostIndex + 1)
+                sumValue += value
+                numActions += 1
+            return sumValue / numActions
+            
+        def maxValue(state,depth):
+            if isTerminal(state,depth):
+                return self.evaluationFunction(state)
+            value = float('-inf')
+
+            for action in state.getLegalActions(0):
+                nextState = state.generateSuccessor( 0,action)
+                temp = expValue(nextState,depth,firstGhost)
+                value = max(value,temp)
+            return value
+        
+        bestAction = None
+        bestScore = float("-inf")
+
+        for action in gameState.getLegalActions(0):
+            nextState = gameState.generateSuccessor(0,action)
+            score = expValue(nextState, 0, firstGhost)
+            if score > bestScore:
+                bestScore = score
+                bestAction = action
+
+        return bestAction
 
 def betterEvaluationFunction(game_state: GameState) -> float:
     """A more sophisticated evaluation function for Pacman game states.
